@@ -1,6 +1,6 @@
 {
   "uuid": "quicksettings-close-autofocus@gammelsami",
-  "name": "QuickSettings Focus on Hover",
+  "name": "QuickSettings close autofocus",
   "description": "Automatically focuses the window under the mouse cursor when panel menus are closed or windows are destroyed",
   "version": 1,
   "shell-version": [
