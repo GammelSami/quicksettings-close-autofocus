@@ -6,11 +6,10 @@ export default class QuickSettingsFocusOnHoverExtension extends Extension {
     constructor(metadata) {
         super(metadata);
         this._signalConnections = [];
+        this._windowManagerSignalId = null;
     }
 
     enable() {
-        console.log('QuickSettings Focus on Hover: Extension enabled');
-
         // Search all panel buttons and connect to their menus
         for (let [name, button] of Object.entries(Main.panel.statusArea)) {
             if (button && button.menu) {
@@ -24,26 +23,35 @@ export default class QuickSettingsFocusOnHoverExtension extends Extension {
                     button: button,
                     signalId: signalId
                 });
-
-                console.log(`QuickSettings Focus on Hover: Connected to ${name}`);
             }
         }
+
+        // Connect to window close events
+        this._windowManagerSignalId = global.window_manager.connect(
+            'destroy',
+            this._onWindowDestroy.bind(this)
+        );
     }
 
     _onMenuStateChanged(name, menu, isOpen) {
         if (!isOpen) {
             // Menu was closed - focus window under mouse
-            console.log(`QuickSettings Focus on Hover: ${name} closed, searching for window under mouse`);
             this._focusWindowUnderMouse();
         }
+    }
+
+    _onWindowDestroy(wm, windowActor) {
+        // Window was closed - focus window under mouse after a short delay
+        // Delay is needed to ensure the window is fully removed from the stack
+        setTimeout(() => {
+            this._focusWindowUnderMouse();
+        }, 50);
     }
 
     _focusWindowUnderMouse() {
         try {
             // Get mouse position
             const [x, y, mods] = global.get_pointer();
-
-            console.log(`QuickSettings Focus on Hover: Mouse position: (${x}, ${y})`);
 
             // Search all windows (from top to bottom in stacking order)
             const workspace = global.workspace_manager.get_active_workspace();
@@ -65,8 +73,6 @@ export default class QuickSettingsFocusOnHoverExtension extends Extension {
                 if (x >= rect.x && x < rect.x + rect.width &&
                     y >= rect.y && y < rect.y + rect.height) {
 
-                    console.log(`QuickSettings Focus on Hover: Window found: ${window.get_title()}`);
-
                     // Focus window
                     const timestamp = global.display.get_current_time_roundtrip();
                     window.activate(timestamp);
@@ -75,24 +81,25 @@ export default class QuickSettingsFocusOnHoverExtension extends Extension {
                 }
             }
 
-            console.log('QuickSettings Focus on Hover: No window under mouse found');
-
         } catch (error) {
             console.error('QuickSettings Focus on Hover: Error while focusing:', error);
         }
     }
 
     disable() {
-        console.log('QuickSettings Focus on Hover: Extension disabled');
-
         // Disconnect all signal connections
         for (let connection of this._signalConnections) {
             if (connection.button && connection.button.menu) {
                 connection.button.menu.disconnect(connection.signalId);
-                console.log(`QuickSettings Focus on Hover: Disconnected from ${connection.name}`);
             }
         }
 
         this._signalConnections = [];
+
+        // Disconnect window manager signal
+        if (this._windowManagerSignalId) {
+            global.window_manager.disconnect(this._windowManagerSignalId);
+            this._windowManagerSignalId = null;
+        }
     }
 }
