@@ -1,0 +1,17 @@
+{
+  "uuid": "quicksettings-focus-on-hover@sam.local",
+  "name": "QuickSettings Focus on Hover",
+  "description": "Automatically focuses the window under the mouse cursor when QuickSettings is closed",
+  "version": 1,
+  "shell-version": [
+    "43",
+    "44",
+    "45",
+    "46",
+    "47",
+    "48",
+    "49"
+  ],
+  "url": "https://github.com/yourusername/quicksettings-focus-on-hover",
+  "settings-schema": "org.gnome.shell.extensions.quicksettings-focus-on-hover"
+}
