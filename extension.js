@@ -41,11 +41,8 @@ export default class QuickSettingsFocusOnHoverExtension extends Extension {
     }
 
     _onWindowDestroy(wm, windowActor) {
-        // Window was closed - focus window under mouse after a short delay
-        // Delay is needed to ensure the window is fully removed from the stack
-        setTimeout(() => {
-            this._focusWindowUnderMouse();
-        }, 50);
+        // Window was closed - focus window under mouse
+        this._focusWindowUnderMouse();
     }
 
     _focusWindowUnderMouse() {

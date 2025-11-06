@@ -2,7 +2,7 @@
   "uuid": "quicksettings-close-autofocus@gammelsami",
   "name": "QuickSettings close autofocus",
   "description": "Automatically focuses the window under the mouse cursor when panel menus are closed or windows are destroyed",
-  "version": 1,
+  "version": 2,
   "shell-version": [
     "45",
     "46",
