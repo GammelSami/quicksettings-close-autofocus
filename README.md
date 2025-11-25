@@ -1,12 +1,12 @@
 # GNOME QuickSettings close autofocus
 
-A GNOME Shell Extension that automatically focuses the window under the mouse when panel menus are closed or windows are destroyed.
+A GNOME Shell Extension that automatically focuses the window under the mouse when panel menus are closed, windows are destroyed, or notification popups are dismissed.
 
 ## What does this extension do?
 
-Normally, after closing panel menus (QuickSettings, tiling extension menus, etc.) or closing windows, the focus stays on the previous window or gets lost. This extension changes that behavior:
+Normally, after closing panel menus (QuickSettings, tiling extension menus, etc.), closing windows, or dismissing notification popups, the focus stays on the previous window or gets lost. This extension changes that behavior:
 
-**When closing any panel menu or window, the window under the mouse cursor is automatically focused.**
+**When closing any panel menu, window, or notification popup, the window under the mouse cursor is automatically focused.**
 
 This makes the behavior more intuitive and follows the "Focus-Follows-Mouse" principle.
 
@@ -14,6 +14,7 @@ This makes the behavior more intuitive and follows the "Focus-Follows-Mouse" pri
 
 - Automatically focuses the window under the mouse when closing panel menus
 - Automatically focuses the window under the mouse when closing windows
+- Automatically focuses the window under the mouse when dismissing notification popups
 - Works with QuickSettings and other panel button menus (e.g., tiling extension menus)
 - Lightweight and non-intrusive
 - No configuration needed
@@ -63,6 +64,11 @@ After installation, the extension works automatically:
 1. Close any window
 2. The window under the mouse cursor is automatically focused
 
+**For notification popups:**
+1. A notification popup appears
+2. Dismiss or close the notification
+3. The window under the mouse cursor is automatically focused
+
 ## Debugging
 
 View logs:
@@ -86,9 +92,10 @@ rm -rf ~/.local/share/gnome-shell/extensions/quicksettings-close-autofocus@gamme
 
 1. The extension connects to the `open-state-changed` signal of all panel menus
 2. The extension connects to the `destroy` signal of the window manager
-3. When a menu is closed or a window is destroyed, the current mouse position is determined
-4. All windows are searched (by stacking order)
-5. The topmost visible window under the mouse is focused
+3. The extension connects to the `notify::visible` signal of the message tray (notifications)
+4. When a menu is closed, a window is destroyed, or a notification is dismissed, the current mouse position is determined
+5. All windows are searched (by stacking order)
+6. The topmost visible window under the mouse is focused
 
 ## Compatibility
 
