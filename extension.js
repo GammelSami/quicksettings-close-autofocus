@@ -1,15 +1,23 @@
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import Meta from 'gi://Meta';
+import Gio from 'gi://Gio';
 
 export default class QuickSettingsFocusOnHoverExtension extends Extension {
     constructor(metadata) {
         super(metadata);
         this._signalConnections = [];
         this._windowManagerSignalId = null;
+        this._notificationSignalId = null;
+        this._wmSettings = null;
     }
 
     enable() {
+        // Load window manager settings to check focus mode
+        this._wmSettings = new Gio.Settings({
+            schema_id: 'org.gnome.desktop.wm.preferences'
+        });
+
         // Search all panel buttons and connect to their menus
         for (let [name, button] of Object.entries(Main.panel.statusArea)) {
             if (button && button.menu) {
@@ -31,6 +39,18 @@ export default class QuickSettingsFocusOnHoverExtension extends Extension {
             'destroy',
             this._onWindowDestroy.bind(this)
         );
+
+        // Connect to notification visibility changes
+        if (Main.messageTray) {
+            try {
+                this._notificationSignalId = Main.messageTray.connect(
+                    'notify::visible',
+                    this._onNotificationVisibilityChanged.bind(this)
+                );
+            } catch (error) {
+                console.error('QuickSettings Focus on Hover: Could not connect to messageTray:', error);
+            }
+        }
     }
 
     _onMenuStateChanged(name, menu, isOpen) {
@@ -43,6 +63,13 @@ export default class QuickSettingsFocusOnHoverExtension extends Extension {
     _onWindowDestroy(wm, windowActor) {
         // Window was closed - focus window under mouse
         this._focusWindowUnderMouse();
+    }
+
+    _onNotificationVisibilityChanged() {
+        if (Main.messageTray && !Main.messageTray.visible) {
+            // Notification popup was hidden/closed - focus window under mouse
+            this._focusWindowUnderMouse();
+        }
     }
 
     _focusWindowUnderMouse() {
@@ -72,7 +99,17 @@ export default class QuickSettingsFocusOnHoverExtension extends Extension {
 
                     // Focus window
                     const timestamp = global.display.get_current_time_roundtrip();
-                    window.activate(timestamp);
+
+                    // Check if focus-follows-mouse is enabled
+                    const focusMode = this._wmSettings.get_string('focus-mode');
+
+                    if (focusMode === 'sloppy' || focusMode === 'mouse') {
+                        // Focus-follows-mouse is active: only focus, don't raise
+                        window.focus(timestamp);
+                    } else {
+                        // Click-to-focus: focus and raise to front
+                        window.activate(timestamp);
+                    }
 
                     return;
                 }
@@ -98,5 +135,14 @@ export default class QuickSettingsFocusOnHoverExtension extends Extension {
             global.window_manager.disconnect(this._windowManagerSignalId);
             this._windowManagerSignalId = null;
         }
+
+        // Disconnect notification signal
+        if (this._notificationSignalId && Main.messageTray) {
+            Main.messageTray.disconnect(this._notificationSignalId);
+            this._notificationSignalId = null;
+        }
+
+        // Clear settings reference
+        this._wmSettings = null;
     }
 }
